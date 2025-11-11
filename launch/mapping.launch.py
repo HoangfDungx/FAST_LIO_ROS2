@@ -47,9 +47,33 @@ def generate_launch_description():
         package='fast_lio',
         executable='fastlio_mapping',
         parameters=[PathJoinSubstitution([config_path, config_file]),
-                    {'use_sim_time': use_sim_time}],
+                    {'use_sim_time': use_sim_time},
+                    {'map_file_path': os.path.join(package_path, 'PCD', 'tru_parking.pcd')}],
         output='screen'
     )
+    
+    # Broadcast TF from map to camera_init
+    static_map_TF_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=['0', '0', '0', '0', '0', '0', 'body', 'livox_frame'],
+        output='screen'
+    )
+    
+    # Wrapper to broadcast base transform and publish trajectory
+    transform_wrapper_node = Node(
+        package='slam_wrapper',
+        executable='transform_wrapper',
+        output='screen',
+        parameters=[
+            {'use_sim_time': use_sim_time},
+        ],
+        remappings=[
+            ('/odom', 'Odometry'),
+            ('/base_trajectory', 'fast_lio/base_trajectory'),
+        ]
+    )
+
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -65,6 +89,8 @@ def generate_launch_description():
     ld.add_action(declare_rviz_config_path_cmd)
 
     ld.add_action(fast_lio_node)
+    ld.add_action(static_map_TF_node)
+    # ld.add_action(transform_wrapper_node)
     ld.add_action(rviz_node)
 
     return ld
