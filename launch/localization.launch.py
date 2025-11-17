@@ -79,7 +79,7 @@ def generate_launch_description():
         arguments=[map_path, '5'],
         remappings=[('cloud_pcd', '/map')],
         parameters=[{'frame_id': 'map'}],
-        condition=IfCondition(PythonExpression([LaunchConfiguration('map'), " != ''"]))
+        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('map'), "' != ''"])),
     )
 
     # RViz2 (conditional)
