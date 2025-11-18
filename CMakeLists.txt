@@ -130,7 +130,7 @@ install(
 )
 
 install(
-  DIRECTORY config launch rviz PCD
+  DIRECTORY config launch rviz rviz_cfg PCD
   DESTINATION share/${PROJECT_NAME}
 )
 

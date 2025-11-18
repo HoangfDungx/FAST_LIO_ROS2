@@ -164,7 +164,7 @@ class FastLioLocalizationNode(Node):
     SCAN_VOXEL_SIZE = 0.1
     FREQ_LOCALIZATION = 0.5  # Hz
     LOCALIZATION_TH = 0.95
-    FOV = 1.6           # radians
+    FOV = 2 * np.pi           # radians
     FOV_FAR = 150.0     # meters
 
     def __init__(self):
@@ -321,7 +321,8 @@ class FastLioLocalizationNode(Node):
         T, fitness = registration_at_scale(scan_to_map, submap, initial=T, scale=1.0)
 
         dt = time.time() - t0
-        self.get_logger().info(f'ICP time: {dt:.3f} s, fitness: {fitness:.4f}')
+        self.get_logger().info(f'ICP time: {dt:.3f} s, fitness: {fitness:.4f} / {self.LOCALIZATION_TH:.4f}')
+        self.get_logger().info(f'Estimated T_map_to_odom:\n{T}')
 
         if fitness > self.LOCALIZATION_TH:
             self.T_map_to_odom = T
@@ -329,7 +330,8 @@ class FastLioLocalizationNode(Node):
             odom_msg = Odometry()
             xyz = self.T_map_to_odom[:3, 3]
             quat = self._quat_from_matrix(self.T_map_to_odom)
-            odom_msg.pose.pose = Pose(Point(*xyz.tolist()), Quaternion(*quat.tolist()))
+            odom_msg.pose.pose.position = Point(x=xyz[0], y=xyz[1], z=xyz[2])
+            odom_msg.pose.pose.orientation = Quaternion(x=quat[0], y=quat[1], z=quat[2], w=quat[3])
             odom_msg.header.frame_id = 'map'
             # Use current odom stamp if present
             if self.cur_odom is not None:

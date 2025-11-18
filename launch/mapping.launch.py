@@ -48,11 +48,10 @@ def generate_launch_description():
         executable='fastlio_mapping',
         parameters=[PathJoinSubstitution([config_path, config_file]),
                     {'use_sim_time': use_sim_time},
-                    {'map_file_path': os.path.join(package_path, 'PCD', 'tru_parking.pcd')}],
+                    {'map_file_path': os.path.join(package_path, 'PCD', 'arena.pcd')}],
         output='screen'
     )
     
-    # Broadcast TF from map to camera_init
     static_map_TF_node = Node(
         package='tf2_ros',
         executable='static_transform_publisher',

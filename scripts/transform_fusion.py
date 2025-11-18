@@ -44,7 +44,7 @@ class TransformFusionNode(Node):
     def __init__(self):
         super().__init__('transform_fusion')
 
-        # Params (same defaults as ROS1 script)
+        # Params
         self.declare_parameter('freq_pub_localization', 50.0)
         self.freq = float(self.get_parameter('freq_pub_localization').value)
         self.period = 1.0 / max(1e-6, self.freq)
@@ -89,7 +89,7 @@ class TransformFusionNode(Node):
         # Broadcast TF: map -> camera_init  (kept exactly like original)
         xyz, quat = mat_to_xyz_quat(T_map_to_odom)
         t = TransformStamped()
-        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.stamp = self.cur_map_to_odom.header.stamp if self.cur_map_to_odom is not None else self.get_clock().now().to_msg()
         t.header.frame_id = 'map'
         t.child_frame_id = 'camera_init'
         t.transform.translation.x = float(xyz[0])
@@ -112,8 +112,8 @@ class TransformFusionNode(Node):
 
             localization = Odometry()
             localization.pose.pose = Pose(
-                position=Point(*l_xyz.tolist()),
-                orientation=Quaternion(*l_quat.tolist())
+                position=Point(x=l_xyz[0], y=l_xyz[1], z=l_xyz[2]),
+                orientation=Quaternion(x=l_quat[0], y=l_quat[1], z=l_quat[2], w=l_quat[3])
             )
             localization.twist = copy.deepcopy(self.cur_odom_to_baselink.twist)
 

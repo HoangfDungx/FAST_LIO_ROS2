@@ -17,6 +17,10 @@ def generate_launch_description():
         'map', default_value='',
         description='map name'
     )
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time', default_value='true',
+        description='Use simulation (Gazebo) clock if true'
+    )
 
     # Package share
     pkg_share = FindPackageShare('fast_lio')
@@ -40,6 +44,7 @@ def generate_launch_description():
         parameters=[
             livox_params,
             {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'feature_extract_enable': False,
                 'point_filter_num': 4,
                 'max_iteration': 3,
@@ -65,7 +70,15 @@ def generate_launch_description():
         package='fast_lio',
         executable='transform_fusion.py',      # or 'transform_fusion' if installed as entry point
         name='transform_fusion',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
         output='screen',
+    )
+    
+    static_map_TF_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=['0', '0', '0', '0', '0', '0', 'body', 'livox_frame'],
+        output='screen'
     )
 
     # PCD map publisher (only if map arg is non-empty)
@@ -78,7 +91,8 @@ def generate_launch_description():
         output='screen',
         arguments=[map_path, '5'],
         remappings=[('cloud_pcd', '/map')],
-        parameters=[{'frame_id': 'map'}],
+        parameters=[{'tf_frame': 'map'},
+                    {'file_name': map_path}],
         condition=IfCondition(PythonExpression(["'", LaunchConfiguration('map'), "' != ''"])),
     )
 
@@ -89,15 +103,18 @@ def generate_launch_description():
         name='rviz',
         output='screen',
         arguments=['-d', rviz_cfg],
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
         condition=IfCondition(LaunchConfiguration('rviz')),
     )
 
     return LaunchDescription([
         rviz_arg,
         map_arg,
+        use_sim_time_arg,
         laser_mapping,
         global_localization,
         transform_fusion,
+        # static_map_TF_node,
         pcd_to_pointcloud,
         rviz2,
     ])
